@@ -1,7 +1,7 @@
 section .data
 code db         "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.", 0
 code_len equ    $ - code - 1
-newline db      10
+newline db      10, 10
 
 section .bss
 buffer resb 30000
@@ -17,12 +17,11 @@ _start:
     mov     rdx, code_len   ; code length
     syscall
 
-    ; Print newline twice
+    ; Print double newline
     mov     rax, 1          ; syscall write
     mov     rdi, 1          ; stdout
     lea     rsi, [newline]  ; newline character address
-    mov     rdx, 1          ; 1 char
-    syscall
+    mov     rdx, 2          ; 2 characters
     syscall
 
     ; Store address to the code in rbx
@@ -81,11 +80,14 @@ output_value:
     jmp     char_loop
 
 input_value:
-    mov     rax, 0      ; syscall read
-    mov     rdi, 0      ; stdin
-    lea     rsi, [r12]  ; buffer address
-    mov     rdx, 1      ; 1 character
+    mov     rax, 0          ; syscall read
+    mov     rdi, 0          ; stdin
+    lea     rsi, [r12]      ; buffer address
+    mov     rdx, 1          ; 1 character
     syscall
+    cmp     rax, 0
+    jne     char_loop
+    mov     byte [r12], -1  ; Set byte to -1 if EOF
     jmp     char_loop
 
 if_zero_go_forward:
