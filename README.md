@@ -10,9 +10,6 @@ This is a [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter writt
   - `ld` for linking
 - Execute `make` to build to the project.
 
-> [!NOTE]
-> You will get multiple `warning: 32-bit absolute section-crossing relocation [-w+reloc-abs-dword]` when compiling. This is harmless and I understand the issue, but I'm not sure how to get rid of it without disabling warnings or creating other warnings.
-
 
 ## Running
 

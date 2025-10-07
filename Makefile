@@ -1,5 +1,5 @@
 TARGET = interpreter
-FLAGS = -f elf64 -w+all
+FLAGS = -f elf64
 
 SRC_DIR = src
 BUILD_DIR = build
