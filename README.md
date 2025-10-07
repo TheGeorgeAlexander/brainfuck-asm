@@ -5,20 +5,20 @@ This is a [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter writt
 
 ## Compiling
 
-> [!NOTE]
-> You will get multiple `warning: 32-bit absolute section-crossing relocation [-w+reloc-abs-dword]` when compiling. This is harmless and I understand the issue, but I'm not sure how to get rid of it without disabling warnings or creating other warnings.
-
 - Requirements
   - `nasm` for compiling
   - `ld` for linking
 - Execute `make` to build to the project.
 
+> [!NOTE]
+> You will get multiple `warning: 32-bit absolute section-crossing relocation [-w+reloc-abs-dword]` when compiling. This is harmless and I understand the issue, but I'm not sure how to get rid of it without disabling warnings or creating other warnings.
+
 
 ## Running
-
-> [!TIP]
-> Don't want to manually paste/type your program each time? Run it from a file with `cat path/to/your/file.b | ./interpreter`
 
 - Execute `./interpreter` to run the program
 - Enter your Brainfuck code and press enter
 - It runs! Admire the output of your beautiful code
+
+> [!TIP]
+> Use `cat path/to/your/file.b | ./interpreter` if you want to read from a file instead of manually typing/pasting your code.

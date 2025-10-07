@@ -1,9 +1,23 @@
 section .data
-ask_input db            "Enter your Brainfuck program: "
-ask_inputlen equ        $ - ask_input
-error_too_large db      10, "Error: Input too large, code can't be more than 15 kB", 10
-error_too_largelen equ  $ - error_too_large
-newlines db             10, 10
+newlines db                 10, 10
+
+ask_input db                "Enter your Brainfuck program: "
+ask_inputlen equ            $ - ask_input
+
+err_too_large db            10, "Error: Input too large, code can't be more than 15 kB", 10
+err_too_largelen equ        $ - err_too_large
+
+err_close_bracket db        10, "Error: No matching closing bracket", 10
+err_close_bracketlen equ    $ - err_close_bracket
+
+err_open_bracket db         10, "Error: No matching opening bracket", 10
+err_open_bracketlen equ     $ - err_open_bracket
+
+err_dp_too_low db           10, "Error: Can't move data pointer left when at the first byte", 10
+err_dp_too_lowlen equ       $ - err_dp_too_low
+
+err_dp_too_high db          10, "Error: Can't move data pointer right when at the end (30,000 bytes)", 10
+err_dp_too_highlen equ      $ - err_dp_too_high
 
 
 section .bss
@@ -40,19 +54,17 @@ _start:
     mov     rdx, 15001          ; Read max of 15001 bytes
     syscall
 
-    cmp     rax, 15000                  ; Error if output is more than 15,000 bytes
+    cmp     rax, 15000              ; Error if output is more than 15,000 bytes
     jle     .good_input
-    mov     rax, 1                      ; syscall write
-    mov     rdi, 2                      ; stderr
-    lea     rsi, [error_too_large]      ; error msg address
-    mov     rdx, error_too_largelen     ; error msg length
+    mov     rax, 1                  ; syscall write
+    mov     rdi, 2                  ; stderr
+    lea     rsi, [err_too_large]    ; error msg address
+    mov     rdx, err_too_largelen   ; error msg length
     syscall
-    mov     rax, 60                     ; syscall exit
-    mov     rdi, 1                      ; exit code 1
-    syscall
+    jmp exit_error
 
 .good_input:
-    mov     r8, rax             ; Length of input
+    mov     r8, rax     ; Length of input
 
     ; Print double newline
     mov     rax, 1          ; syscall write
@@ -66,8 +78,8 @@ _start:
 
 ; Loop over all characters in the code
 char_loop:
-    inc     r9         ; Increment instruction pointer
-    mov     al, [r9]   ; Load instruction
+    inc     r9          ; Increment instruction pointer
+    mov     al, [r9]    ; Load instruction
 
     test    al, al      ; NULL means end of program, so exit
     je      exit
@@ -95,12 +107,28 @@ char_loop:
 
 op_right:
     inc     r10
-    jmp     char_loop
+    lea     rax, [buffer + 30000]
+    cmp     r10, rax                ; Error if out of bounds
+    jl      char_loop
+    mov     rax, 1                  ; syscall write
+    mov     rdi, 2                  ; stderr
+    lea     rsi, [err_dp_too_high]  ; error address
+    mov     rdx, err_dp_too_highlen ; error length
+    syscall
+    jmp     exit_error
 
 
 op_left:
     dec     r10
-    jmp     char_loop
+    lea     rax, [buffer]
+    cmp     r10, rax                ; Error if out of bounds
+    jge     char_loop
+    mov     rax, 1                  ; syscall write
+    mov     rdi, 2                  ; stderr
+    lea     rsi, [err_dp_too_low]   ; error address
+    mov     rdx, err_dp_too_lowlen  ; error length
+    syscall
+    jmp     exit_error
 
 
 op_inc:
@@ -141,18 +169,28 @@ op_jmp_fw:
     mov     rbx, 1                  ; Bracket counter
     .march_to_matching:
         inc     r9
+        lea     rax, [codebuffer + r8]      ; Address after code
+        cmp     r9, rax                     ; Error if data pointer is out of bounds
+        jl      .in_bounds
+        mov     rax, 1                      ; syscall write
+        mov     rdi, 2                      ; stderr
+        lea     rsi, [err_close_bracket]    ; error msg address
+        mov     rdx, err_close_bracketlen   ; error msg length
+        syscall
+        jmp exit_error
+    .in_bounds:
         cmp     byte [r9], '['
         jne     .no_opening_bracket
-        inc     rbx                 ; Seen opening bracket, increment bracket counter
+        inc     rbx                     ; Seen opening bracket, increment bracket counter
         jmp     .march_to_matching
     .no_opening_bracket:
         cmp     byte [r9], ']'
         jne     .march_to_matching
-        dec     rbx                 ; Seen closing bracket, reduce bracket counter
+        dec     rbx                     ; Seen closing bracket, reduce bracket counter
 
         test    rbx, rbx
-        jne     .march_to_matching  ; Bracket counter not 0? Continue to find matching bracket
-        jmp     char_loop           ; Bracket counter 0, we're done here
+        jne     .march_to_matching      ; Bracket counter not 0? Continue to find matching bracket
+        jmp     char_loop               ; Bracket counter 0, we're done here
 
 
 op_jmp_bw:
@@ -162,6 +200,16 @@ op_jmp_bw:
     mov     rbx, 1                  ; Bracket counter
     .march_to_matching:
         dec     r9
+        lea     rax, [codebuffer]
+        cmp     r9, rax                     ; Error if data pointer is out of bounds
+        jge     .in_bounds
+        mov     rax, 1                      ; syscall write
+        mov     rdi, 2                      ; stderr
+        lea     rsi, [err_open_bracket]     ; error msg address
+        mov     rdx, err_open_bracketlen    ; error msg length
+        syscall
+        jmp exit_error
+    .in_bounds:
         cmp     byte [r9], ']'
         jne     .no_closing_bracket
         inc     rbx                 ; Seen closing bracket, increment bracket counter
@@ -178,4 +226,9 @@ op_jmp_bw:
 exit:
     mov     rax, 60     ; syscall exit
     xor     rdi, rdi    ; exit code 0
+    syscall
+
+exit_error:
+    mov     rax, 60     ; syscall exit
+    mov     rdi, 1      ; exit code 1
     syscall
