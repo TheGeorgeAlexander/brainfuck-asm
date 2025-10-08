@@ -1,3 +1,5 @@
+default rel
+
 section .data
 newlines db                 10, 10
 
@@ -169,7 +171,8 @@ op_jmp_fw:
     mov     rbx, 1                  ; Bracket counter
     .march_to_matching:
         inc     r9
-        lea     rax, [codebuffer + r8]      ; Address after code
+        lea     rax, [codebuffer]
+        add     rax, r8                     ; Address after code
         cmp     r9, rax                     ; Error if data pointer is out of bounds
         jl      .in_bounds
         mov     rax, 1                      ; syscall write
