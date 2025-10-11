@@ -1,6 +1,8 @@
 # Brainfuck Assembly Interpreter
 
-This is a [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter written in x86_64 assembly for Linux. I made this to learn assembly, so this is my first assembly project. I chose to make this because it wasn't too big of a project, while still not as trivial as a simple "Hello World!".
+This is a [brainfuck](https://en.wikipedia.org/wiki/brainfuck) interpreter written in x86_64 assembly for Linux. I made this to learn assembly, so this is my first assembly project. I chose to make this because it wasn't too big of a project, while still not as trivial as a simple "Hello World!".
+
+The interpreter has 50,000 brainfuck cells, each is a single byte. The data pointer starts at the leftmost cell.
 
 
 ## Compiling
@@ -13,9 +15,9 @@ This is a [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter writt
 
 ## Running
 
-- Execute `./interpreter` to run the program
-- Enter your Brainfuck code and press enter
-- It runs! Admire the output of your beautiful code
-
-> [!TIP]
-> Use `cat path/to/your/file.b | ./interpreter` if you want to read from a file instead of manually typing/pasting your code.
+Your code can't be bigger than 500 kB. Any character that is not a brainfuck command is ignored.
+```
+Usage:
+    ./interpreter           Manually enter brainfuck code
+    ./interpreter <PATH>    Read brainfuck code from a file
+```
